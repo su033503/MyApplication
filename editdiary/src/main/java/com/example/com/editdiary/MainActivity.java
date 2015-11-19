@@ -11,8 +11,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Calendar;
 
@@ -35,6 +37,12 @@ public class MainActivity extends AppCompatActivity {
         edtDate = (EditText)findViewById(R.id.edtDate);
         btnWrite = (Button)findViewById(R.id.btnWrite);
 
+        cal = Calendar.getInstance();
+        final int cYear = cal.get(Calendar.YEAR);   //오늘 날짜는 또 쓰이는 곳이 있으므로 final로 생성
+        final int cMonth = cal.get(Calendar.MONTH);
+        final int cDay = cal.get(Calendar.DAY_OF_MONTH);
+        makeDiary(cYear, cMonth, cDay);
+
         edtDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -42,37 +50,49 @@ public class MainActivity extends AppCompatActivity {
                 AlertDialog.Builder dlg = new AlertDialog.Builder(MainActivity.this);
                 dlg.setTitle("날짜 선택");
                 dlg.setView(dateView);
-                dp = (DatePicker)dateView.findViewById(R.id.datePicker1);
 
-               cal = Calendar.getInstance();
-                int cYear = cal.get(Calendar.YEAR);
-                int cMonth = cal.get(Calendar.MONTH);
-                int cDay = cal.get(Calendar.DAY_OF_MONTH);
-
+                dp = (DatePicker) dateView.findViewById(R.id.datePicker1);
                 dp.init(cYear, cMonth, cDay, new DatePicker.OnDateChangedListener() {
                     public void onDateChanged(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-                        cal.set(year,monthOfYear,dayOfMonth);
+                        cal.set(year, monthOfYear, dayOfMonth);
                     }
                 });
 
                 dlg.setPositiveButton("확인", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        int cYear = cal.get(Calendar.YEAR);
-                        int cMonth = cal.get(Calendar.MONTH);
-                        int cDay = cal.get(Calendar.DAY_OF_MONTH);
-                        String date = Integer.toString(cYear)+"년 "+Integer.toString(cMonth + 1)+"월 "+ Integer.toString(cDay)+"일";
-                        fileName = Integer.toString(cYear) + "_" + Integer.toString(cMonth + 1) + "_" + Integer.toString(cDay) + ".txt";
-                        String str = readDiary(fileName);
-                        edtDate.setText(date);
-                        edtDiary.setText(str);
-                        btnWrite.setEnabled(true);
+                        int sYear = cal.get(Calendar.YEAR);
+                        int sMonth = cal.get(Calendar.MONTH);
+                        int sDay = cal.get(Calendar.DAY_OF_MONTH);
+                        makeDiary(sYear, sMonth, sDay);
                     }
                 });
                 dlg.setNegativeButton("취소", null);
                 dlg.show();
             }
         });
+        btnWrite.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    FileOutputStream outFs = openFileOutput(fileName,1);
+                    String str = edtDiary.getText().toString();
+                    outFs.write(str.getBytes());
+                    outFs.close();
+                    Toast.makeText(getApplicationContext(), fileName + " 이 저장됨", Toast.LENGTH_SHORT).show();
+                } catch (IOException e) {
+
+                }
+            }
+        });
+    }
+    public void makeDiary(int year, int month, int day) {
+        String date = Integer.toString(year)+"년 "+Integer.toString(month + 1)+"월 "+ Integer.toString(day)+"일";
+        fileName = Integer.toString(year) + "_" + Integer.toString(month + 1) + "_" + Integer.toString(day) + ".txt";
+        String str = readDiary(fileName);
+        edtDate.setText(date);
+        edtDiary.setText(str);
+        btnWrite.setEnabled(true);
     }
     String readDiary(String fName) {
         String diaryStr = null;
